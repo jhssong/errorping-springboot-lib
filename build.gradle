@@ -35,6 +35,14 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
 tasks.named('jar') {
     enabled = true
     archiveClassifier.set('')

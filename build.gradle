@@ -29,8 +29,8 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.42")
 
     // configuration metadata
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
-    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:3.5.4"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor:3.5.4"
 }
 
 tasks.named('jar') {

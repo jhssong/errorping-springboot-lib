@@ -19,18 +19,21 @@ repositories {
 }
 
 dependencies {
-    // spring
-    implementation 'org.springframework.boot:spring-boot-starter:3.5.4'
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.5.4'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.5.4'
+    // spring boot bom
+    implementation platform("org.springframework.boot:spring-boot-dependencies:3.5.4")
+
+    // spring boot starter
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // lombok
     compileOnly("org.projectlombok:lombok:1.18.42")
     annotationProcessor("org.projectlombok:lombok:1.18.42")
 
     // configuration metadata
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:3.5.4"
-    compileOnly "org.springframework.boot:spring-boot-configuration-processor:3.5.4"
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor"
 }
 
 tasks.named('jar') {

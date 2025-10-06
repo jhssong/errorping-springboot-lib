@@ -1,10 +1,15 @@
 package com.jhssong.errorping.exception;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.jhssong.errorping.ErrorpingService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +42,21 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    private static final Logger EXCEPTION_DETAIL_LOGGER = getLogger("ERROR_DETAIL_LOGGER");
+
+    public void logDetailedException(Exception ex) {
+        StackTraceElement[] origin = ex.getStackTrace();
+        EXCEPTION_DETAIL_LOGGER.error(
+                "Exception occurred at {}.{}({}:{}): {}",
+                origin[0].getClassName(),
+                origin[0].getMethodName(),
+                origin[0].getFileName(),
+                origin[0].getLineNumber(),
+                ex.getMessage(),
+                ex
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidationExceptions(MethodArgumentNotValidException ex,
                                                                     HttpServletRequest request) {
@@ -60,8 +80,12 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
 
         ProblemDetail problem = createProblemDetail(HttpStatus.BAD_REQUEST, message, request);
-        log.error("[ValidationException] {} - {}", HttpStatus.BAD_REQUEST.value(), message);
-        errorpingService.sendError(problem);
+        log.warn("[ValidationException] status={} method={} uri={} message={}",
+                HttpStatus.BAD_REQUEST.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                message);
+
         return ResponseEntity.badRequest().body(problem);
     }
 
@@ -70,7 +94,12 @@ public class GlobalExceptionHandler {
             HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
         ProblemDetail problem = createProblemDetail(HttpStatus.METHOD_NOT_ALLOWED,
                 "지원되지 않는 요청 메서드입니다.", request);
-        log.warn("[MethodNotAllowed] {} - {}", HttpStatus.METHOD_NOT_ALLOWED.value(), ex.getMessage());
+        log.warn("[MethodNotAllowed] status={} method={} uri={} message={}",
+                HttpStatus.METHOD_NOT_ALLOWED.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
+
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(problem);
     }
 
@@ -79,7 +108,12 @@ public class GlobalExceptionHandler {
                                                                HttpServletRequest request) {
         ProblemDetail problem = createProblemDetail(HttpStatus.NOT_FOUND,
                 "요청한 리소스를 찾을 수 없습니다.", request);
-        log.warn("[NotFound] {} - {}", HttpStatus.NOT_FOUND.value(), request.getRequestURI());
+        log.warn("[NotFound] status={} method={} uri={} message={}",
+                HttpStatus.NOT_FOUND.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
     }
 
@@ -87,18 +121,38 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleAllExceptions(Exception ex, HttpServletRequest request) {
         ProblemDetail problem = createProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR,
                 "서버 내부 에러입니다.", request);
-        log.error("[InternalServerError] {}", ex.getMessage(), ex);
+        log.error("[InternalServerError] status={} method={} uri={} message={}",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
+        logDetailedException(ex);
+
         errorpingService.sendError(problem);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
     }
 
     @ExceptionHandler(BaseDomainException.class)
     public ResponseEntity<ProblemDetail> handleBaseDomainException(BaseDomainException ex,
-                                                                   WebRequest request) {
-        HttpServletRequest httpRequest = (HttpServletRequest) request.resolveReference(WebRequest.REFERENCE_REQUEST);
-        assert httpRequest != null;
-        ProblemDetail problem = createProblemDetail(ex.getStatus(), ex.getMessage(), httpRequest);
-        log.error("[BaseDomainException] {} - {}", ex.getStatus().value(), ex.getMessage());
+                                                                   HttpServletRequest request) {
+        ProblemDetail problem = createProblemDetail(ex.getStatus(), ex.getMessage(), request);
+        if (ex.getStatus().is5xxServerError()) {
+            log.error("[{}] status={} method={} uri={} message={}",
+                    ex.getClass().getSimpleName(),
+                    ex.getStatus().value(),
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    ex.getMessage());
+            logDetailedException(ex);
+        } else {
+            log.warn("[{}] status={} method={} uri={} message={}",
+                    ex.getClass().getSimpleName(),
+                    ex.getStatus().value(),
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    ex.getMessage());
+        }
+
         errorpingService.sendError(problem);
         return ResponseEntity.status(ex.getStatus()).body(problem);
     }

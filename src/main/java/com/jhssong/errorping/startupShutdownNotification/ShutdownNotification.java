@@ -4,6 +4,8 @@ import com.jhssong.errorping.ErrorpingProperties;
 import com.jhssong.errorping.ErrorpingProperties.StartupShutdownNotification;
 import com.jhssong.errorping.ErrorpingService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ShutdownNotification {
 
+    private static final Logger log = LoggerFactory.getLogger(ShutdownNotification.class);
     private final ErrorpingProperties props;
     private final ErrorpingService errorpingService;
 
@@ -22,6 +25,7 @@ public class ShutdownNotification {
             return;
         }
 
+        log.info("Shutting down");
         errorpingService.sendInfo(startupShutdownNotification.getShutdownTitle(),
                 startupShutdownNotification.getShutdownMessage());
     }

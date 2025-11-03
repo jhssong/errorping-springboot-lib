@@ -1,23 +1,20 @@
 package com.jhssong.errorping;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @Service
 public class ErrorpingService {
 
-    private final String channelId;
     private final WebClient webClient;
 
     public ErrorpingService(ErrorpingProperties props) {
-        this.channelId = props.getChannelId();
         this.webClient = WebClient.builder()
                 .baseUrl("https://errorping.jhssong.com")
                 .defaultHeader("Content-Type", "application/json")
@@ -27,7 +24,6 @@ public class ErrorpingService {
 
     private void post(MessageType messageType, Map<String, Object> body) {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("channelId", this.channelId);
         requestBody.put("messageType", messageType.name());
         requestBody.put("body", body);
 

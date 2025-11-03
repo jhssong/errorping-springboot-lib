@@ -9,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "errorping")
 public class ErrorpingProperties {
     private String apiKey;
-    private String channelId;
     private StartupShutdownNotification startupShutdownNotification = new StartupShutdownNotification();
 
 

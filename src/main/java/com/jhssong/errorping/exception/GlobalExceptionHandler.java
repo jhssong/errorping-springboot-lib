@@ -4,12 +4,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.jhssong.errorping.ErrorpingService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.net.URI;
+import java.time.ZonedDateTime;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +17,14 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.net.URI;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
+    private static final Logger EXCEPTION_DETAIL_LOGGER = getLogger("ERROR_DETAIL_LOGGER");
     private final ErrorpingService errorpingService;
 
     private ProblemDetail createProblemDetail(HttpStatus status,
@@ -38,11 +35,9 @@ public class GlobalExceptionHandler {
         problem.setTitle(status.getReasonPhrase());
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("method", request.getMethod());
-        problem.setProperty("timestamp", LocalDateTime.now().toString());
+        problem.setProperty("timestamp", ZonedDateTime.now().toString());
         return problem;
     }
-
-    private static final Logger EXCEPTION_DETAIL_LOGGER = getLogger("ERROR_DETAIL_LOGGER");
 
     public void logDetailedException(Exception ex) {
         StackTraceElement[] origin = ex.getStackTrace();

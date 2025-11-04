@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
         problem.setTitle(status.getReasonPhrase());
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("method", request.getMethod());
-        problem.setProperty("timestamp", ZonedDateTime.now().toString());
+        problem.setProperty("timestamp", ZonedDateTime.now().toOffsetDateTime().toString());
         return problem;
     }
 

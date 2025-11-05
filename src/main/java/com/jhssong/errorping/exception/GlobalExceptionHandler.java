@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -39,7 +40,7 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    public void logDetailedException(Exception ex) {
+    private void logDetailedException(Exception ex) {
         StackTraceElement[] origin = ex.getStackTrace();
         EXCEPTION_DETAIL_LOGGER.error(
                 "Exception occurred at {}.{}({}:{}): {}",
@@ -50,6 +51,20 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 ex
         );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex,
+                                                            HttpServletRequest request) {
+        ProblemDetail problem = createProblemDetail(HttpStatus.FORBIDDEN,
+                "권한이 없습니다.", request);
+        log.warn("[Forbidden] status={} method={} uri={} message={}",
+                HttpStatus.FORBIDDEN.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -139,6 +154,7 @@ public class GlobalExceptionHandler {
                     request.getRequestURI(),
                     ex.getMessage());
             logDetailedException(ex);
+            errorpingService.sendError(problem);
         } else {
             log.warn("[{}] status={} method={} uri={} message={}",
                     ex.getClass().getSimpleName(),
@@ -148,7 +164,6 @@ public class GlobalExceptionHandler {
                     ex.getMessage());
         }
 
-        errorpingService.sendError(problem);
         return ResponseEntity.status(ex.getStatus()).body(problem);
     }
 }

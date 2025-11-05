@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex,
                                                             HttpServletRequest request) {
         ProblemDetail problem = createProblemDetail(HttpStatus.FORBIDDEN,
-                "권한이 없습니다.", request);
+                "권한이 필요합니다.", request);
         log.warn("[Forbidden] status={} method={} uri={} message={}",
                 HttpStatus.FORBIDDEN.value(),
                 request.getMethod(),

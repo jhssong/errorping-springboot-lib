@@ -18,6 +18,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -98,6 +99,28 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(problem);
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ProblemDetail> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+
+        String paramName = ex.getName();
+        String requiredType = ex.getRequiredType() != null
+                ? ex.getRequiredType().getSimpleName()
+                : "unknown";
+        String message = String.format("'%s' 파라미터는 %s 타입이어야 합니다.", paramName, requiredType);
+
+        ProblemDetail problem = createProblemDetail(HttpStatus.BAD_REQUEST, message, request);
+        log.warn("[TypeMismatch] status={} method={} uri={} message={}",
+                HttpStatus.BAD_REQUEST.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                message);
+
+        return ResponseEntity.badRequest().body(problem);
+    }
+
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(

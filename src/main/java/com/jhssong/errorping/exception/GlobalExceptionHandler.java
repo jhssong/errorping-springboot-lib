@@ -120,8 +120,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(problem);
     }
-
-
+    
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {

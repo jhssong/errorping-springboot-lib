@@ -34,8 +34,26 @@ public class ErrorpingService {
                 .toBodilessEntity()
                 .subscribe(
                         response -> log.debug("Errorping request sent successfully"),
-                        throwable -> log.warn("Failed to send error to Errorping: {}", throwable.getMessage())
+                        throwable -> log.warn("Errorping request failed: {}", throwable.getMessage())
                 );
+    }
+
+    private void postBlocking(MessageType messageType, Map<String, Object> body) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("messageType", messageType.name());
+        requestBody.put("body", body);
+
+        try {
+            this.webClient.post()
+                    .uri("")
+                    .body(BodyInserters.fromValue(requestBody))
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+            log.debug("Errorping request sent successfully");
+        } catch (Exception e) {
+            log.error("Errorping request failed: {}", e.getMessage());
+        }
     }
 
     public void sendError(ProblemDetail res) {
@@ -57,7 +75,7 @@ public class ErrorpingService {
         body.put("title", title);
         body.put("message", message);
 
-        post(MessageType.INFO, body);
+        postBlocking(MessageType.INFO, body);
     }
 
 }
